@@ -149,7 +149,6 @@ export default {
 
             loading: false,
             dataset_item_size: 32,
-            visible: {},    // contains which datasets are visible, by id
             page: 0,
             
             //cache
@@ -231,10 +230,6 @@ export default {
             this.check_project_id();
             this.reload();
         },
-        
-        visible: function(v) {
-            
-        }
     },
 
 	methods: {
