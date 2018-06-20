@@ -32,9 +32,6 @@
                                 <b-dropdown-item @click="order = 'desc'">Description (z-a)</b-dropdown-item>
                             </b-dropdown>
                         </div>
-                        <div class="rerun_failed_processes" @click.stop="rerun_failed_processes" title="Rerun All Failed Processes">
-                            <icon name="redo" />
-                        </div>
                     </div>
                 </b-col>
             </b-row>
@@ -74,9 +71,6 @@
                                 <div @click.stop="editdesc(instance)" class="button" title="Edit Description">
                                     <icon name="edit"/>
                                 </div>
-                                <div v-if="instance.status == 'failed'" @click.stop="rerun_failed_tasks(instance)" class="button" title="Rerun All Failed Tasks">
-                                    <icon name="redo" />
-                                </div>
                                 <div @click.stop="remove(instance)" class="button" title="Remove Process">
                                     <icon name="trash"/>
                                 </div>
@@ -91,6 +85,18 @@
                     </b-row>
                 </div>
                 <process v-if="instance == selected" :project="project" :instance="instance" class="process" ref="process" />
+            </div>
+            <div v-if="failed_processes_exist" style="margin:20px;margin-top:10px;margin-bottom:60px;">
+                <b-row>
+                    <b-col :cols="8">
+                        <p>Please click the button to the right to rerun all of the failed processes from the above list</p>
+                    </b-col>
+                    <b-col :cols="4" style="text-align: right;">
+                        <b-button @click.stop="rerun_failed_processes" variant="secondary">
+                            Rerun All Failed Processes
+                        </b-button>
+                    </b-col>
+                </b-row>
             </div>
         </div>
         <br>
@@ -137,6 +143,17 @@ export default {
     },
 
     computed: {
+        failed_processes_exist: function() {
+            let result = false;
+            for (let instance of this.instances) {
+                if (instance.status == 'failed') {
+                    result = true;
+                    break;
+                }
+            }
+            return result;
+        },
+        
         sorted_and_filtered_instances: function() {
 
             //apply filter
@@ -569,16 +586,6 @@ background-color: #f0f0f0;
 border-bottom: 1px solid #e0e0e0;
 }
 
-.rerun_failed_processes {
-opacity:.4;
-display:inline-block;
-vertical-align:middle;
-transition:opacity .3s;
-}
-.rerun_failed_processes:hover {
-opacity:1;
-cursor:pointer;
-}
 .button-fixed {
 right: 30px;
 }
