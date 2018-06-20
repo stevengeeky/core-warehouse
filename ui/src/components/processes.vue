@@ -32,6 +32,9 @@
                                 <b-dropdown-item @click="order = 'desc'">Description (z-a)</b-dropdown-item>
                             </b-dropdown>
                         </div>
+                        <div class="rerun_failed_processes" @click.stop="rerun_failed_processes" title="Rerun All Failed Processes">
+                            <icon name="redo" />
+                        </div>
                     </div>
                 </b-col>
             </b-row>
@@ -290,20 +293,28 @@ export default {
             });
         },
         
+        rerun_failed_processes: function() {
+            this.instances.forEach(instance => {
+                this.rerun_failed_tasks(instance);
+            });
+        },
+        
         rerun_failed_tasks: function(instance) {
-            this.$http.get(Vue.config.wf_api + '/task', {params: {
-                find: JSON.stringify({
-                    instance_id: instance._id,
-                    status: 'failed',
-                    'config._tid': {$exists: true}, //use _tid to know that it's meant for process view,
-                }),
-                sort: 'create_date',
-            }}).then(res => {
-                res.body.tasks.forEach(task => {
-                    this.$http.put(Vue.config.wf_api + '/task/rerun/' + task._id)
-                    .catch(console.error);
-                });
-            }).catch(console.error);
+            if (instance.status == 'failed') {
+                this.$http.get(Vue.config.wf_api + '/task', {params: {
+                    find: JSON.stringify({
+                        instance_id: instance._id,
+                        status: 'failed',
+                        'config._tid': {$exists: true}, //use _tid to know that it's meant for process view,
+                    }),
+                    sort: 'create_date',
+                }}).then(res => {
+                    res.body.tasks.forEach(task => {
+                        this.$http.put(Vue.config.wf_api + '/task/rerun/' + task._id)
+                        .catch(console.error);
+                    });
+                }).catch(console.error);
+            }
         },
 
         capitalize: function(string) {
@@ -558,6 +569,16 @@ background-color: #f0f0f0;
 border-bottom: 1px solid #e0e0e0;
 }
 
+.rerun_failed_processes {
+opacity:.4;
+display:inline-block;
+vertical-align:middle;
+transition:opacity .3s;
+}
+.rerun_failed_processes:hover {
+opacity:1;
+cursor:pointer;
+}
 .button-fixed {
 right: 30px;
 }
