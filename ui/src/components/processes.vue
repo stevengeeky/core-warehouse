@@ -1,35 +1,40 @@
 <template>
 <div v-if="instances" class="processes">
     <div class="page-header">
-        <div style="margin-top: 2px; margin-left: 10px; display: inline-block;">
-            <b>{{instances.length}}</b> Processes
-        </div>
+        <div style="margin-top: 2px;">
+            <b-row style="flex-wrap: nowrap !important; white-space: nowrap;">
+                <b-col :cols="3" style="vertical-align: top;">
+                    <b>{{instances.length}}</b> Processes
+                </b-col>
+                <b-col style="vertical-align: top;">
+                    <div v-if="instances.length > 1" style="text-align:right; position: relative;"> 
+                        <div style="display: inline-block; margin-right: 10px;">
+                            <small>Show</small>
+                            <div class="status-toggler">
+                                <b-button size="sm" variant="outline-secondary" :pressed="show == null" @click="show = null">All ({{instances.length}})</b-button>
+                                <b-button size="sm" v-for="state in ['running', 'finished', 'failed']"  :key="state"
+                                        :pressed="show == state" :variant="state2variant(state)" @click="show = state">
+                                        {{state}} ({{instance_counts[state]||0}})
+                                </b-button>
+                            </div>
+                        </div>
 
-        <div v-if="instances.length > 1" style="float: right; position: relative; top: -3px;"> 
-            <div style="display: inline-block; margin-right: 10px;">
-                <small>Show</small>
-                <div class="status-toggler">
-                    <b-button size="sm" variant="outline-secondary" :pressed="show == null" @click="show = null">All ({{instances.length}})</b-button>
-                    <b-button size="sm" v-for="state in ['running', 'finished', 'failed']"  :key="state"
-                            :pressed="show == state" :variant="state2variant(state)" @click="show = state">
-                            {{state}} ({{instance_counts[state]||0}})
-                    </b-button>
-                </div>
-            </div>
-
-            <div style="display: inline-block;">
-                <small>Order by</small>
-                <b-dropdown :text="order" size="sm" :variant="'light'">
-                    <b-dropdown-item @click="order = 'create_date'">Create Date (new first)</b-dropdown-item>
-                    <b-dropdown-item @click="order = '-create_date'">Create Date (old first)</b-dropdown-item>
-                    <b-dropdown-divider></b-dropdown-divider>
-                    <b-dropdown-item @click="order = 'update_date'">Update Date (new first)</b-dropdown-item>
-                    <b-dropdown-item @click="order = '-update_date'">Update Date (old first)</b-dropdown-item>
-                    <b-dropdown-divider></b-dropdown-divider>
-                    <b-dropdown-item @click="order = '-desc'">Description (a-z)</b-dropdown-item>
-                    <b-dropdown-item @click="order = 'desc'">Description (z-a)</b-dropdown-item>
-                </b-dropdown>
-            </div>
+                        <div style="display: inline-block;">
+                            <small>Order by</small>
+                            <b-dropdown :text="order" size="sm" :variant="'light'">
+                                <b-dropdown-item @click="order = 'create_date'">Create Date (new first)</b-dropdown-item>
+                                <b-dropdown-item @click="order = '-create_date'">Create Date (old first)</b-dropdown-item>
+                                <b-dropdown-divider></b-dropdown-divider>
+                                <b-dropdown-item @click="order = 'update_date'">Update Date (new first)</b-dropdown-item>
+                                <b-dropdown-item @click="order = '-update_date'">Update Date (old first)</b-dropdown-item>
+                                <b-dropdown-divider></b-dropdown-divider>
+                                <b-dropdown-item @click="order = '-desc'">Description (a-z)</b-dropdown-item>
+                                <b-dropdown-item @click="order = 'desc'">Description (z-a)</b-dropdown-item>
+                            </b-dropdown>
+                        </div>
+                    </div>
+                </b-col>
+            </b-row>
         </div>
     </div>
     <div class="instances" id="scrolled-area" ref="scrolled_area">
@@ -48,7 +53,7 @@
                 <div class="instance-header" :class="instance_class(instance)" @click="toggle_instance(instance)">
                     <b-row style="flex-wrap:nowrap !important;">
                         <b-col :cols="6">
-                            <div class="instance-status instance-info" :class="'instance-status-'+instance.status">
+                            <div class="instance-status instance-info" :class="'instance-status-'  + instance.status">
                                 <statusicon :status="instance.status"/>
                             </div>
                             <div class="instance-desc instance-info">
@@ -62,16 +67,19 @@
                             </div>
                         </b-col>
                         <b-col style="text-align:right;">
-                            <div class="instance-info">
-                                <contact :id="instance.user_id" short="true"/>
-                            </div>
                             <div class="process-action instance-info" style="margin-right: 20px; position: relative; top: -4px">
-                                <div @click.stop="editdesc(instance)" class="button">
+                                <div @click.stop="editdesc(instance)" class="button" title="Edit Description">
                                     <icon name="edit"/>
                                 </div>
-                                <div @click.stop="remove(instance)" class="button">
+                                <div v-if="instance.status == 'failed'" @click.stop="rerun_failed_tasks(instance)" class="button" title="Rerun All Failed Tasks">
+                                    <icon name="redo" />
+                                </div>
+                                <div @click.stop="remove(instance)" class="button" title="Remove Process">
                                     <icon name="trash"/>
                                 </div>
+                            </div>
+                            <div class="instance-info">
+                                <contact :id="instance.user_id" short="true"/>
                             </div>
                             <div style="width: 130px;" class="text-muted instance-info">
                                 <timeago :since="instance.create_date" :auto-update="10"/>
@@ -280,6 +288,22 @@ export default {
                     });
                 });
             });
+        },
+        
+        rerun_failed_tasks: function(instance) {
+            this.$http.get(Vue.config.wf_api + '/task', {params: {
+                find: JSON.stringify({
+                    instance_id: instance._id,
+                    status: 'failed',
+                    'config._tid': {$exists: true}, //use _tid to know that it's meant for process view,
+                }),
+                sort: 'create_date',
+            }}).then(res => {
+                res.body.tasks.forEach(task => {
+                    this.$http.put(Vue.config.wf_api + '/task/rerun/' + task._id)
+                    .catch(console.error);
+                });
+            }).catch(console.error);
         },
 
         capitalize: function(string) {
