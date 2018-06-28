@@ -67,9 +67,8 @@ export default {
         //prevent vue-form-input's value from getting changed accidentally by use mouse-wheeling on top of focused
         //number input
         handle_scroll: function(evt) {
-            evt.preventDefault();
+            evt.target.blur();
         }
     }
 }
 </script>
-
