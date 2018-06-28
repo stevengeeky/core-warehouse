@@ -61,6 +61,9 @@
                         <contact :id="instance.user_id" short="true"/>
                     </div>
                     <div class="process-action instance-info" style="margin-right: 20px; position: relative; top: -3px; float: right;">
+                        <div v-if="instance.status == 'failed'" @click.stop="rerun_failed_tasks(instance)" class="button" title="Rerun failed tasks">
+                            <icon name="redo"/>
+                        </div>
                         <div @click.stop="editdesc(instance)" class="button">
                             <icon name="edit"/>
                         </div>
