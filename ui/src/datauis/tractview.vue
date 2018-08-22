@@ -62,4 +62,8 @@ border:none;
 width:100%;
 height:100%;
 }
+<<<<<<< HEAD
 </style>
+=======
+</style>
+>>>>>>> 586d8146f6dfb6212b1ddbd2831b6c0ab59c11b9
