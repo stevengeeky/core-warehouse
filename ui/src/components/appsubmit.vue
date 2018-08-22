@@ -25,7 +25,7 @@
                     <select2 
                         v-if="form.projects[input.id][idx]"
                         v-model="form.inputs[input.id][idx]" 
-                        :dataAdapter="debounce_fetch_datasets(input)" 
+                        :dataAdapter="debounce_fetch_datasets(idx, input)" 
                         :allowClear="input.optional"
                         :multiple="false" 
                         :placeholder="'Select Input Dataset'" 
@@ -193,7 +193,7 @@ export default {
         },
         */
 
-        fetch_datasets: function(input, params, cb) {
+        fetch_datasets: function(project, input, params, cb) {
             // essentially the same code from datasetselecter.vue
             if (!params.page) params.page = 1;
             var dropdown_items = [];
@@ -201,7 +201,7 @@ export default {
             let limit = 100;
             let skip = (params.page - 1) * limit;
             let find_raw = {
-                project: this.form.projects[input.id][0],
+                project,
                 datatype: input.datatype._id,
                 storage: {$exists: true}, 
                 removed: false,
@@ -246,7 +246,7 @@ export default {
         },
         
         // wait a bit (unless interrupted by more keystrokes), then calls fetch_datasets
-        debounce_fetch_datasets: function(input) {
+        debounce_fetch_datasets: function(project_idx, input) {
             let debounce;
             
             // return a new fetch_datasets event that can be called for each input datatype
@@ -259,7 +259,7 @@ export default {
                 }
                 debounce = setTimeout(()=>{
                     debounce = null;
-                    this.fetch_datasets(input, params, cb);
+                    this.fetch_datasets(this.form.projects[input.id][project_idx], input, params, cb);
                 }, 200);
             }
         },
