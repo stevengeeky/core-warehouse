@@ -12,6 +12,7 @@
   "dependencies": {
     "@statnett/vue-plotly": "^0.2.0",
     "animate.css": "^3.7.0",
+    "ansi-html": "0.0.7",
     "async": "^2.6.1",
     "bootstrap-vue": "^2.0.0-rc.11",
     "element-theme": "^2.0.1",

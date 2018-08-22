@@ -14,7 +14,7 @@
             <b-row v-for="(item, idx) in form.inputs[input.id]" :key="idx" style="margin-bottom: 5px;">
                 <b-col cols="5">
                     <projectselecter 
-                        v-model="form.projects[input.id]" 
+                        v-model="form.projects[input.id][idx]" 
                         :datatype="input.datatype"
                         :datatype_tags="input.datatype_tags"
                         :required="true"
@@ -23,7 +23,7 @@
                 </b-col>
                 <b-col cols="6">
                     <select2 
-                        v-if="form.projects[input.id]"
+                        v-if="form.projects[input.id][idx]"
                         v-model="form.inputs[input.id][idx]" 
                         :dataAdapter="debounce_fetch_datasets(input)" 
                         :allowClear="input.optional"
@@ -154,6 +154,7 @@ export default {
             for(var idx in this.app.inputs) {
                 var input = this.app.inputs[idx];
                 Vue.set(this.form.inputs, input.id, [null]);
+                Vue.set(this.form.projects, input.id, []);
             }
 
             return this.$http.get(Vue.config.wf_api + '/resource/best', {params: {
@@ -200,7 +201,7 @@ export default {
             let limit = 100;
             let skip = (params.page - 1) * limit;
             let find_raw = {
-                project: this.form.projects[input.id],
+                project: this.form.projects[input.id][0],
                 datatype: input.datatype._id,
                 storage: {$exists: true}, 
                 removed: false,
@@ -364,7 +365,9 @@ export default {
             let project_ids = [ this.project ]; //desintation
             //for project selected for input
             for(let input_id in this.form.projects) {
-                project_ids.push(this.form.projects[input_id]);
+                for (let project of this.form.projects[input_id]) {
+                    project_ids.push(project);
+                }
             }
             this.$http.get('project', {params: {
                 find: JSON.stringify({
