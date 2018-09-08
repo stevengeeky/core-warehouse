@@ -50,7 +50,7 @@
                     &nbsp;
                     &nbsp;
                 </span>
-                <span class="stat" style="float: right;" v-b-tooltip.hover title="success rate finished/(failed+finished)">
+                <span class="stat" style="float: right;" v-b-tooltip.hover title="success rate  = finished/(failed+finished)">
                     <icon name="check-circle" scale="0.8"/> {{app_.stats.success_rate.toFixed(1)}}%
                 </span>
             </div>
@@ -78,24 +78,33 @@ export default {
         clickable: {type: Boolean, default: true},
         height: String,
     },
+    watch: {
+        appid() {
+            if(this.appid) this.load_app();
+        },
+        app() {
+            if(this.app) this.app_ = this.app;
+        }
+    },
     data() {
         return {
             app_: null
         }
     },
     created: function() {
-        if(this.appid) {
+        if(this.appid) this.load_app();
+        if(this.app) this.app_ = this.app;
+    },
+    methods: {
+        load_app() {
             this.$http.get('app', {params: {
                 find: JSON.stringify({_id: this.appid}),
                 populate: 'inputs.datatype outputs.datatype',
             }}).then(res=>{
                 this.app_ = res.body.apps[0];
             });
-        }
-        if(this.app) this.app_ = this.app;
-    },
-    methods: {
-        click: function() {
+        },
+        click() {
             if(this.clickable) {
                 this.$router.push('/app/'+this.app_._id);
                 this.$emit("open", this.app_._id);

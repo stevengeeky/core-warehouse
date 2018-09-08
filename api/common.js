@@ -121,14 +121,16 @@ exports.archive_task = function(task, dataset, files_override, auth, cb) {
                     var untar = child_process.spawn("tar", ["xz"], {cwd: fullpath});
                     writestream = untar.stdin;
                     untar.on('close', code=>{
-                        if(code) return next_file("untar files with code:"+code);
+                        if(code) {
+                            if(file.required) return next_file({ message: "tar failed with code:"+code, file });
+                            logger.error("tar finished with code "+code);
+                        }
                         if(input_ok) {
                             logger.debug("download/tar complete");
                             filenames.push(file.dirname);
                             next_file();
                         } else {
                             if(file.required) return next_file({ message: "required input directory failed to download/untar", file });
-                            
                             //failed but not required.. remove the directory
                             fs.rmdir(fullpath, next_file);
                         }
@@ -458,15 +460,12 @@ exports.deref_contact = function(id) {
 }
 
 exports.populate_github_fields = function(repo, app, cb) {
-    //load github info
     exports.load_github_detail(repo, (err, repo, con_details)=>{
         if(err) return cb(err);
         app.desc = repo.description;
         app.tags = repo.topics;
-
         if(!app.stats) app.stats = {};
         app.stats.stars = repo.stargazers_count;
-
         app.contributors = con_details.map(con=>{
             //see https://api.github.com/users/francopestilli for other fields
             return {name: con.name, email: con.email};

@@ -4,6 +4,7 @@
         <h3><icon name="paper-plane"></icon> {{task.name||task.service}}</h3>
     </slot>
 
+
     <!--status indicator-->
     <div class="status-card" :class="task.status" style="border: none;">
         <div style="float: left; padding: 6px 8px" @click="poke">
@@ -11,9 +12,10 @@
         </div>
         <div style="margin-left: 45px;">
             <div style="float: right;">
+                <div class="button" style="opacity: 0.7" v-if="editing_desc === null" @click="edit_desc" title="Edit Notes"><icon name="edit"/></div>
                 <div class="button" style="opacity: 0.7" :id="'popover'+task.config._tid"><icon name="info"/></div>
                 <b-popover :target="'popover'+task.config._tid" triggers="hover click focus">
-                    <template slot="title"><span class="text-muted">ID {{task._id}}</span></template>
+                    <template slot="title"><span class="text-muted"><small>ID</small> {{task._id}}</span></template>
                     <p>
                         <contact :id="task.user_id" size="small"/>
                     </p>
@@ -34,17 +36,24 @@
                         <th>Failed</th>
                         <td>{{new Date(this.task.fail_date).toLocaleString()}}</td>
                     </tr>
-                    <tr v-if="task.next_date">
-                        <th>Next Chk</th>
-                        <td>{{new Date(this.task.next_date).toLocaleString()}}</td>
-                    </tr>
                     <tr v-if="task.nice">
                         <th>Nice</th>
                         <td>{{task.nice}} <small style="opacity: 0.5">yeilds to less nice tasks</small></td>
                     </tr>
-                   <tr v-if="resource">
+                    <tr v-if="task.config._rule">
+                        <th>Rule</th>
+                        <td>
+                            <small>This task was submitted by {{task.config._rule.id}}
+                            For subject:<b>{{task.config._rule.subject}}</b></small>
+                        </td>
+                    </tr>
+                    <tr v-if="resource">
                         <th>Resource</th>
                         <td>{{this.resource.name}}</td>
+                    </tr>
+                    <tr v-if="task.next_date" style="opacity: 0.6;">
+                        <th>Next&nbsp;Chk</th>
+                        <td>{{new Date(this.task.next_date).toLocaleString()}}</td>
                     </tr>
                     </table>
                     <p v-if="task.status == 'finished'" style="opacity: 0.5;">
@@ -72,9 +81,21 @@
         </div>
     </div>
 
+    <div class="note" v-if="task.desc || editing_desc !== null">
+        <div v-if="task.desc && editing_desc == null" @click="edit_desc" class="note-text">
+            <vue-markdown :source="task.desc" class="readme"></vue-markdown>
+        </div>
+        <div v-if="editing_desc !== null" style="position: relative;">
+            <b-form-textarea ref="desc_editor" v-model="editing_desc" placeholder="Enter Notes in Markdown" :rows="3" style="border: none; border-radius: 0; padding-right: 100px"/>
+            <div class="button" @click="update_desc" style="position: absolute; top: 0; right: 0px; background-color: #ddd; margin: 5px;"><icon name="check"/> Update</div>
+        </div>
+    </div>
+
     <div v-if="task.service != 'soichih/sca-product-raw'">
         <taskconfig :task="task" style="padding: 10px;"/>
     </div>
+
+
     <div v-if="has_input_slot">
         <div @click="toggle('input')" class="toggler">
             <icon name="chevron-right" class="caret" :class="{'caret-open': activeSections.input}"/> Input
@@ -122,22 +143,24 @@ import mute from '@/components/mute'
 import tags from '@/components/tags'
 import taskconfig from '@/components/taskconfig'
 import contact from '@/components/contact'
+import VueMarkdown from 'vue-markdown'
 
 let resource_cache = {};
 
 export default {
     props: ['task'],
     components: { 
-        filebrowser, statusicon, mute, tags, taskconfig, contact ,
+        filebrowser, statusicon, mute, tags, taskconfig, contact, VueMarkdown,
     },
     data () {
         return {
-
             activeSections: {
                 output: true, 
                 input: true,
             },
             show_masked_config: false,
+            editing_desc: null,
+            desc: null,
 
             resource: null,
         }
@@ -248,6 +271,22 @@ export default {
                 console.error(err); 
             });
         },
+        edit_desc() {
+            this.editing_desc = this.task.desc||"";
+            this.$nextTick(()=>{
+                this.$refs.desc_editor.focus();
+            });
+        },
+        update_desc() {
+            this.task.desc = this.editing_desc;
+            this.editing_desc = null;
+            this.$http.put(Vue.config.wf_api+'/task/'+this.task._id, {desc: this.task.desc})
+            .then(res=>{
+                this.$notify({text: "Note successfully updated", type: 'success'});
+            }).catch(err=>{
+                console.error(err); 
+            });
+        },
     },
 }
 </script>
@@ -336,5 +375,17 @@ max-height: 230px;
 {
 opacity: 0;
 max-height: 0px;
+}
+.note {
+color: #666;
+border-bottom: 1px solid #eee;
+}
+.note-text {
+padding: 5px; 
+font-size: 90%;
+}
+.note-text:hover {
+background-color: #eee;
+cursor: pointer;
 }
 </style>

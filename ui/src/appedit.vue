@@ -113,8 +113,8 @@
                         <b-card style="position: relative;">
                             <b-row v-if="is_raw(input)">
                                 <b-col>
-                                    <b-alert show variant="warning">
-                                        Warning: You have chosen a raw datatype as an input. If possible, please request your upstream app developer to create a new datatype so that it can instead be used to pass data between apps.
+                                    <b-alert show variant="warning" style="margin-bottom: 10px;">
+                                        Warning: You have chosen a raw datatype as an input. We strongly recommend working with the developers of the App who is generating the raw datatype to register a new datatype so that it can used instead to pass dataset between Apps. Please refer to <a href="https://brain-life.github.io/docs/user/datatypes/">Datatypes</a>
                                     </b-alert>
                                 </b-col>
                             </b-row>
@@ -138,7 +138,7 @@
                                     </div>
                                     <b-form-checkbox v-model="input.optional">
                                         Optional 
-                                        <small class="text-muted">user can submit this app without this input specified</small>
+                                        <small class="text-muted">user can submit this App without this input specified</small>
                                     </b-form-checkbox>
                                     <b-form-checkbox v-model="input.multi">
                                         Multi
@@ -231,6 +231,7 @@
                                 <b-col>
                                     <div class="text-muted">Datatype</div>
                                     <datatypeselecter v-model="output.datatype"></datatypeselecter>
+                                    <datatype :datatype="datatypes[output.datatype]" style="margin-top: 5px;" v-if="output.datatype"/>
                                 </b-col>
                                 <b-col cols="7" v-if="output.datatype">
                                     <div class="text-muted">Datatype Tags</div>
@@ -464,12 +465,13 @@ import multiprojectselecter from '@/components/multiprojectselecter'
 import datatypeselecter from '@/components/datatypeselecter'
 import trueorfalse from '@/components/trueorfalse'
 import tageditor from '@/components/tageditor'
+import datatype from '@/components/datatype'
 
 export default {
     components: { 
         sidemenu, contactlist, 
         pageheader, multiprojectselecter,
-        datatypeselecter, trueorfalse, tageditor,
+        datatypeselecter, trueorfalse, tageditor, datatype,
 
         editor: require('vue2-ace-editor'),
     },
@@ -684,9 +686,6 @@ export default {
             for (let output of this.output_datasets) {
                 if (!output.id) {
                     return cb("Not all output ids are non-null");
-                }
-                if (inputTable[output.id]) {
-                    return cb("Duplicate ID '" + output.id + "' found in list of inputs and outputs");
                 }
                 if (outputTable[output.id]) {
                     return cb("Duplicate ID '" + output.id + "' found in list of outputs");

@@ -1,16 +1,15 @@
 <template>
 <div class="appstats" v-if="app.stats">
 <b-row>
-    <b-col cols="2" style="border-right: 1px solid #ddd;">
+    <b-col cols="2">
         <center>
             <p class="header">Since</p>
             <span class="stat">{{new Date(app.create_date).toLocaleDateString()}}</span>
         </center>
     </b-col>
-    <b-col cols="2" style="border-right: 1px solid #ddd;">
+    <b-col cols="2">
         <center>
-            <p class="header">App&nbsp;Status</p>
-
+            <p class="header">Status</p>
             <!-- TODO load from test status once we have it setup -->
             <statustag status="ok"/>
         </center>
@@ -23,25 +22,25 @@
         <center style="opacity: 0.3; padding-top: 10px;"><b>&nbsp;&nbsp;&nbsp;<icon name="cog" spin/> Loading..&nbsp;&nbsp;&nbsp;</b></center>
     </b-col>
     -->
-    <b-col cols="2">
+    <b-col cols="2" v-b-tooltip.hover title="Number of time this App was requested.">
         <center>
             <span class="stat">{{app.stats.service.counts.requested||0}}</span>
             <p class="header">Total&nbsp;Runs</p>
         </center>
     </b-col>
-    <b-col cols="2">
+    <b-col cols="2" v-b-tooltip.hover title="Number of unique users who ran this App.">
         <center>
             <span class="stat">{{app.stats.service.users}}</span>
             <p class="header">Users</p>
         </center>
     </b-col>
-    <b-col cols="2">
+    <b-col cols="2" v-b-tooltip.hover title="finished/(failed+finished). Same request could be re-submitted / rerun.">
         <center>
             <span class="stat" :class="success_rate_color">{{app.stats.success_rate.toFixed(1)}}%</span>
             <p class="header">Success&nbsp;Rate</p>
         </center>
     </b-col>
-    <b-col cols="2" style="border-left: 1px solid #ddd;">
+    <b-col cols="2">
         <center>
             <!--
             <gh-btns-star :slug="app.github" show-count></gh-btns-star>
@@ -120,12 +119,8 @@ export default {
 
 <style scoped>
 .appstats {
-padding: 5px;
-background-color: #f0f0f0;
-min-height: 50px;
-width: 100%;
 font-size: 90%;
-color: #666;
+color: #555;
 }
 .header {
 opacity: 0.5;
